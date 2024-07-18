@@ -2,22 +2,28 @@
 title: "Tutorial AdaptRSG"
 author: "Davide Fabbrico"
 date: "2024-07-18"
-output: html_document
+output:
+    html_document:
+      toc: true
+      toc_float: true
+      toc_collapsed: true
+      toc_depth: 3
+      theme: lumen
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## How to Install the Package `AdaptiveAllocation`?
+## Install `AdaptiveAllocation`
 
-You can install the development version of AdaptiveAllocation from GitHub (<https://github.com/davidefabbrico/AdaptiveAllocation>) with:
+You can install the development version of `AdaptiveAllocation` from GitHub (<https://github.com/davidefabbrico/AdaptiveAllocation>) with:
 ```{r install, eval=FALSE}
 # install.packages("devtools")
 devtools::install_github("davidefabbrico/AdaptiveAllocation", force = T)
 ```
 
-## How to Use the Package `AdaptiveAllocation`?
+## Using `AdaptiveAllocation`
 
 First, let's create some simulated data to test our algorithm. In this case, we use the dataset proposed in the article by Miller and Harrison to generate $n$ observations from a multivariate normal distribution of dimension $d$. Specifically, for a given dimensionality $d$, we draw $X_1, \ldots, X_n \sim N(m, I) + N(0, I) + N(-m, I)$, where $m = (3/\sqrt{d}, \ldots, 3/\sqrt{d}) \in \mathbb{R}^d$, and then normalize each dimension to have zero mean and unit variance.
 
@@ -89,7 +95,7 @@ Our Adaptive MCMC algorithm requires some additional settings. First, we need to
 library(AdaptiveAllocation)
 # save the chain
 myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.6,
+                            burnin = burnin, thin = thin, gamma = 0.5,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
                       lambda0 = 30, zeta = 0.996, nSD = 0)
   # compute the ARIs
@@ -107,7 +113,7 @@ myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, i
 ```
 
 
-Let's note that the algorithm includes several parameters. Let's review them one by one. `iterTuning` represents the number of iterations for tuning the parameter $\lambda$. If `iterTuning = iter`, then $\lambda \rightarrow 1$; otherwise, $\lambda$ maintains the value at the `iterTuning` iteration for the remainder of the MCMC. $\gamma$ is the value in the following mixture $\alpha_t = \gamma \cdot \left(f(t) \cdot \alpha_{t-1} + g(t) \cdot D_t^{\lambda} \right) + (1-\gamma) \cdot U$, where $D$ is the diversity vector and $U$ is the uniform vector. The functions $f$ and $g$ are defined as $f(t) = \frac{t}{t+s}$ and $g(t) = \frac{s}{t+s}$. `method = EB` means that the hyperparameters of the priors are set using empirical Bayes. `hyper` includes various hyperparameters of the prior distributions. `updateProbAllocation` indicates the thinning number for updating the allocation matrix. `lambda0` and `zeta` are the parameters for updating $\lambda$. `nSD` is the number of standard deviations to add to the value $s$ (see the article for more details).
+Let's note that the algorithm includes several parameters. Let's review them one by one. `iterTuning` represents the number of iterations for tuning the parameter $\lambda$. If `iterTuning = iter`, then $\lambda \rightarrow 1$; otherwise, $\lambda$ maintains the value at the `iterTuning` iteration for the remainder of the MCMC. $\gamma$ is the value in the following mixture $\alpha_t = \gamma \cdot \left(f(t) \cdot \alpha_{t-1} + g(t) \cdot D_t^{\lambda} \right) + (1-\gamma) \cdot U$, where $D$ is the diversity vector and $U$ is the uniform vector. The functions $f$ and $g$ are defined as $f(t) = \frac{t}{t+s}$ and $g(t) = \frac{s}{t+s}$. `method = "EB"` means that the hyperparameters of the priors are set using Empirical Bayes, otherwise set `method = ""`. `hyper` includes various hyperparameters of the prior distributions. `updateProbAllocation` indicates the thinning number for updating the allocation matrix. `lambda0` and `zeta` are the parameters for updating $\lambda$. `nSD` is the number of standard deviations to add to the value $s$ (see the article for more details).
 
 #### $n$ replicas
 
@@ -122,7 +128,7 @@ myTime <- matrix(0, nrow = nout, ncol = replica)
 for (repl in 1:replica) {
     set.seed(repl)
     myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.6,
+                            burnin = burnin, thin = thin, gamma = 0.5,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
                       lambda0 = 30, zeta = 0.996, nSD = 0)
     # compute the ARIs
@@ -148,7 +154,7 @@ for (repl in 1:replica) {
 
 ```
 
-### Compare the `AdaptRSG` with the `SSG` and the `RSG`
+### `AdaptRSG` vs `SSG` vs `RSG`
 
 ```{r comparison_alg, fig.width=10, fig.height=5, fig.align='center'}
 
@@ -158,7 +164,7 @@ myTime <- randomTime <- sysTime <- matrix(0, nrow = nout, ncol = replica)
   for (repl in 1:replica) {
     set.seed(repl)
     myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.6,
+                            burnin = burnin, thin = thin, gamma = 0.5,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
                       lambda0 = 30, zeta = 0.996, nSD = 0)
     SysRes <- AdaptiveAllocation::ssg(allData, K = K, iteration = iter, method = "EB", hyper = c(1, 1, 0, 1, 1, 1), burnin = burnin, thin = thin, trueAll = T)
@@ -308,10 +314,133 @@ plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "RSG")
 
 Let’s visualize the points with the highest diversity at the end of the algorithm.
 ```{r diversity, fig.width=10, fig.height=5, fig.align='center'}
-iter <- 10000
-myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.6,
+iterD <- 10000
+myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iterD, iterTuning = iter,
+                            burnin = burnin, thin = thin, gamma = 0.5,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
                       lambda0 = 30, zeta = 0.996, nSD = 0)
 AdaptiveAllocation::scattPlot2d(res = myRes, data = allData, diversity = T)
+```
+
+
+## Supplementary
+
+### Diversity Functions
+Let’s assume we use a different Diversity function. The various implemented functions are as follows:
+
+* `diversity = "Generalized-Entropy"`
+* `diversity = "Partial-Generalized-Entropy"`
+* `diversity = "Exponential"`
+* `diversity = "Pareto"`
+* `diversity = "Weibull"`
+* `diversity = "Hyperbole"`
+
+Let’s try using the `diversity = "Weibull"`, and compare it with the two previous competing algorithms.
+
+```{r Weibull, fig.width=10, fig.height=5, fig.align='center'}
+
+# save the chain
+saveRandomChain <- saveMyChain <- saveSysChain <- matrix(0, ncol = replica, nrow = nout)
+myTime <- randomTime <- sysTime <- matrix(0, nrow = nout, ncol = replica)
+  for (repl in 1:replica) {
+    set.seed(repl)
+    myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
+                            burnin = burnin, thin = thin, gamma = 0.5,
+                            method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = F, updateProbAllocation = 5, DiversityIndex = "Weibull", kWeibull = 0.5, lambda = 1)
+    SysRes <- AdaptiveAllocation::ssg(allData, K = K, iteration = iter, method = "EB", hyper = c(1, 1, 0, 1, 1, 1), burnin = burnin, thin = thin, trueAll = T)
+    RandomRes <- AdaptiveAllocation::rssg(allData, K = K, m = m, iteration = iter,
+                      burnin = burnin, thin = thin, method = "EB",
+                      hyper = c(1, 1, 0, 1, 1, 1))
+    # compute the ARIs
+    myARI <- rep(0, nout)
+    SysARI <- rep(0, nout)
+    RandomARI <- rep(0, nout)
+    for (i in 1:nout) {
+      myARI[i] <- mclust::adjustedRandIndex(myRes$Allocation[i,], trueClusters)
+      SysARI[i] <- mclust::adjustedRandIndex(SysRes$Allocation[i,], trueClusters)
+      RandomARI[i] <- mclust::adjustedRandIndex(RandomRes$Allocation[i,], trueClusters)
+    }
+    saveMyChain[, repl] <- myARI
+    saveSysChain[, repl] <- SysARI
+    saveRandomChain[, repl] <- RandomARI
+    
+    myTime[,repl] <- myRes$Execution_Time
+    randomTime[,repl] <- RandomRes$Execution_Time
+    sysTime[,repl] <- SysRes$Execution_Time
+  }
+  
+  meanMyLoss <- apply(saveMyChain, 1, mean)
+  meanSysLoss <- apply(saveSysChain, 1, mean)
+  meanRandomLoss <- apply(saveRandomChain, 1, mean)
+  meanMSysLoss <- mean(meanSysLoss[-c(1:(iter/2))])
+  # plot ARIs
+  iterPlot <- 1:nout
+  plot(iterPlot, meanMyLoss, type = "l", col = "#FF6961", xlab = "iteration", ylab = "ARI", ylim = c(-0.2, 1))
+  abline(h = meanMSysLoss, col = "#AEC6CF", lwd = 2)
+  lines(iterPlot, meanRandomLoss, col = "#77DD77")
+  lines(iterPlot, meanSysLoss, col = "lightblue")
+  x_vert <- ceiling((n/m)*(K-1)) + ceiling(sqrt((n/m)*(K-1)*K))
+  abline(v = x_vert, col = "blue", lty = 2)
+  # systematic
+  lbSys <- apply(saveSysChain, 1, quantile, 0.05)
+  ubSys <- apply(saveSysChain, 1, quantile, 0.95)
+  polygon(x = c(iterPlot, rev(iterPlot)), y = c(lbSys, rev(ubSys)), col = rgb(0, 0, 1, alpha = 0.2), border = NA)
+  # random band
+  lbRandom <- apply(saveRandomChain, 1, quantile, 0.05)
+  ubRandom <- apply(saveRandomChain, 1, quantile, 0.95)
+  polygon(x = c(iterPlot, rev(iterPlot)), y = c(lbRandom, rev(ubRandom)), col = rgb(0, 1, 0, alpha = 0.2), border = NA)
+  # my adaptive
+  lbMy <- apply(saveMyChain, 1, quantile, 0.05)
+  ubMy <- apply(saveMyChain, 1, quantile, 0.95)
+  polygon(x = c(iterPlot, rev(iterPlot)), y = c(lbMy, rev(ubMy)), col = rgb(1, 0, 0, alpha = 0.2), border = NA)
+  legend("bottomright", legend = c("SSG", "RSG", "AdaptRSG"), col = c("#AEC6CF", "#77DD77", "#FF6961"), lty = 1, cex = 0.8, lwd = 2.5)
+  
+  nIterMyLoss <- rep(iter, replica)
+  nIterRandLoss <- rep(iter, replica)
+  nIterSysLoss <- rep(iter, replica)
+  for (repl in 1:replica) {
+    for (i in 1:nout) {
+      if (saveMyChain[i, repl] <= meanMSysLoss + 0.01 && saveMyChain[i, repl] >= meanMSysLoss - 0.01) {
+        nIterMyLoss[repl] <- i
+        break
+      } else {
+        nIterMyLoss[repl] <- iter
+      }
+    }
+  }
+  for (repl in 1:replica) {
+    for (i in 1:nout) {
+      if (saveRandomChain[i, repl] <= meanMSysLoss + 0.01 && saveRandomChain[i, repl] >= meanMSysLoss - 0.01) {
+        nIterRandLoss[repl] <- i
+        break
+      } else {
+        nIterRandLoss[repl] <- iter
+      }
+    }
+  }
+  for (repl in 1:replica) {
+    for (i in 1:nout) {
+      if (saveSysChain[i, repl] <= meanMSysLoss + 0.01 && saveSysChain[i, repl] >= meanMSysLoss - 0.01) {
+        nIterSysLoss[repl] <- i
+        break
+      } else {
+        nIterSysLoss[repl] <- iter
+      }
+    }
+  }
+  MyTimeRepl <- RandomTimeRepl <- SysTimeRepl <- c()
+  for (repl in 1:replica) {
+    SysTimeRepl[repl] <- sysTime[nIterMyLoss[repl], repl]
+    MyTimeRepl[repl] <- myTime[nIterMyLoss[repl], repl]
+    RandomTimeRepl[repl] <- randomTime[nIterRandLoss[repl], repl]
+  }
+  MyTimeRepl <- MyTimeRepl/1000000
+  RandomTimeRepl <- RandomTimeRepl/1000000
+  SysTimeRepl <- SysTimeRepl/1000000
+  boxplot(SysTimeRepl, MyTimeRepl, RandomTimeRepl, 
+          names = c("SSG", "AdaptRSG", "RSG"), 
+          main = "",
+          ylab = "Execution Time to Convergence (sec.)",
+          col = c("lightblue", "lightpink", "lightgreen"))
+
 ```
