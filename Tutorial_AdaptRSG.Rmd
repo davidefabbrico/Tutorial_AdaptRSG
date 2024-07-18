@@ -68,10 +68,10 @@ The MCMC algorithm requires some initial settings. In particular, we need to spe
 
 ```{r mcmc_settings}
 
-iter <- 5000
+iter <- 6000
 burnin <- 0
 thin <- 1
-m <- 5
+m <- 6
 K <- 3
 nout <- (iter-burnin)/thin
 
@@ -89,9 +89,9 @@ Our Adaptive MCMC algorithm requires some additional settings. First, we need to
 library(AdaptiveAllocation)
 # save the chain
 myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.999,
+                            burnin = burnin, thin = thin, gamma = 0.6,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
-                      lambda0 = 30, zeta = 0.996, a = 100, nSD = 0)
+                      lambda0 = 30, zeta = 0.996, nSD = 0)
   # compute the ARIs
   myARI <- rep(0, nout)
   for (i in 1:nout) {
@@ -107,7 +107,7 @@ myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, i
 ```
 
 
-Let's note that the algorithm includes several parameters. Let's review them one by one. `iterTuning` represents the number of iterations for tuning the parameter $\lambda$. If `iterTuning = iter`, then $\lambda \rightarrow 1$; otherwise, $\lambda$ maintains the value at the `iterTuning` iteration for the remainder of the MCMC. $\gamma$ is the value in the following mixture $\alpha_t = \gamma \cdot \left(f(t) \cdot \alpha_{t-1} + g(t) \cdot D_t^{\lambda} \right) + (1-\gamma) \cdot U$, where $D$ is the diversity vector and $U$ is the uniform vector. The functions $f$ and $g$ are defined as $f(t) = \frac{1}{2} \left(1 + \tanh\left(\frac{t-s}{a}\right)\right)$ and $g(t) = \frac{1}{2} \left(1 - \tanh\left(\frac{t-s}{a}\right)\right)$. `method = EB` means that the hyperparameters of the priors are set using empirical Bayes. `hyper` includes various hyperparameters of the prior distributions. `updateProbAllocation` indicates the thinning number for updating the allocation matrix. `lambda0` and `zeta` are the parameters for updating $\lambda$. `a` is the value of the functions $f$ and $g$ that indicates how "close" the functions are; the larger the value, the closer the functions. `nSD` is the number of standard deviations to add to the value $s$ (see the article for more details).
+Let's note that the algorithm includes several parameters. Let's review them one by one. `iterTuning` represents the number of iterations for tuning the parameter $\lambda$. If `iterTuning = iter`, then $\lambda \rightarrow 1$; otherwise, $\lambda$ maintains the value at the `iterTuning` iteration for the remainder of the MCMC. $\gamma$ is the value in the following mixture $\alpha_t = \gamma \cdot \left(f(t) \cdot \alpha_{t-1} + g(t) \cdot D_t^{\lambda} \right) + (1-\gamma) \cdot U$, where $D$ is the diversity vector and $U$ is the uniform vector. The functions $f$ and $g$ are defined as $f(t) = \frac{t}{t+s}$ and $g(t) = \frac{s}{t+s}$. `method = EB` means that the hyperparameters of the priors are set using empirical Bayes. `hyper` includes various hyperparameters of the prior distributions. `updateProbAllocation` indicates the thinning number for updating the allocation matrix. `lambda0` and `zeta` are the parameters for updating $\lambda$. `nSD` is the number of standard deviations to add to the value $s$ (see the article for more details).
 
 #### $n$ replicas
 
@@ -122,9 +122,9 @@ myTime <- matrix(0, nrow = nout, ncol = replica)
 for (repl in 1:replica) {
     set.seed(repl)
     myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.999,
+                            burnin = burnin, thin = thin, gamma = 0.6,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
-                      lambda0 = 30, zeta = 0.996, a = 100, nSD = 0)
+                      lambda0 = 30, zeta = 0.996, nSD = 0)
     # compute the ARIs
     myARI <- rep(0, nout)
     for (i in 1:nout) {
@@ -158,9 +158,9 @@ myTime <- randomTime <- sysTime <- matrix(0, nrow = nout, ncol = replica)
   for (repl in 1:replica) {
     set.seed(repl)
     myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.999,
+                            burnin = burnin, thin = thin, gamma = 0.6,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
-                      lambda0 = 30, zeta = 0.996, a = 100, nSD = 0)
+                      lambda0 = 30, zeta = 0.996, nSD = 0)
     SysRes <- AdaptiveAllocation::ssg(allData, K = K, iteration = iter, method = "EB", hyper = c(1, 1, 0, 1, 1, 1), burnin = burnin, thin = thin, trueAll = T)
     RandomRes <- AdaptiveAllocation::rssg(allData, K = K, m = m, iteration = iter,
                       burnin = burnin, thin = thin, method = "EB",
@@ -270,13 +270,13 @@ library(ellipse)
 par(mfrow = c(1, 2))
 plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "RSG")
     centroide1 <- RandomRes$Mu[[nout]][1,]
-    covarianza1 <- RandomRes$Precision[[i]][1,]
+    covarianza1 <- RandomRes$Precision[[nout]][1,]
     covarianza1 <- diag(1/covarianza1)
     centroide2 <- RandomRes$Mu[[nout]][2,]
-    covarianza2 <- RandomRes$Precision[[i]][2,]
+    covarianza2 <- RandomRes$Precision[[nout]][2,]
     covarianza2 <- diag(1/covarianza2)
     centroide3 <- RandomRes$Mu[[nout]][3,]
-    covarianza3 <- RandomRes$Precision[[i]][3,]
+    covarianza3 <- RandomRes$Precision[[nout]][3,]
     covarianza3 <- diag(1/covarianza3)
     ellisse1 <- ellipse(covarianza1, centre=centroide1, level=0.95)
     lines(ellisse1, col="#FF6961", lwd = 3) 
@@ -288,13 +288,13 @@ plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "RSG")
     
     plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "AdaptRSG")
     centroide1 <- myRes$Mu[[nout]][1,]
-    covarianza1 <- myRes$Precision[[i]][1,]
+    covarianza1 <- myRes$Precision[[nout]][1,]
     covarianza1 <- diag(1/covarianza1)
     centroide2 <- myRes$Mu[[nout]][2,]
-    covarianza2 <- myRes$Precision[[i]][2,]
+    covarianza2 <- myRes$Precision[[nout]][2,]
     covarianza2 <- diag(1/covarianza2)
     centroide3 <- myRes$Mu[[nout]][3,]
-    covarianza3 <- myRes$Precision[[i]][3,]
+    covarianza3 <- myRes$Precision[[nout]][3,]
     covarianza3 <- diag(1/covarianza3)
     ellisse1 <- ellipse(covarianza1, centre=centroide1, level=0.95)
     lines(ellisse1, col="#FF6961", lwd = 3) 
@@ -308,10 +308,10 @@ plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "RSG")
 
 Let’s visualize the points with the highest diversity at the end of the algorithm.
 ```{r diversity, fig.width=10, fig.height=5, fig.align='center'}
-iter <- 5000
+iter <- 10000
 myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iter, iterTuning = iter,
-                            burnin = burnin, thin = thin, gamma = 0.999,
+                            burnin = burnin, thin = thin, gamma = 0.6,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
-                      lambda0 = 30, zeta = 0.996, a = 100, nSD = 0)
+                      lambda0 = 30, zeta = 0.996, nSD = 0)
 AdaptiveAllocation::scattPlot2d(res = myRes, data = allData, diversity = T)
 ```
