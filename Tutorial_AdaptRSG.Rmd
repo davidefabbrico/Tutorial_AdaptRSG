@@ -120,7 +120,7 @@ Let's note that the algorithm includes several parameters. Let's review them one
 ```{r adaptive_alg, fig.width=10, fig.height=5, fig.align='center'}
 
 # number of replica
-replica <- 5
+replica <- 10
 # save the chain
 saveMyChain <- matrix(0, ncol = replica, nrow = nout)
 # Execution time
@@ -314,7 +314,7 @@ plot(allData[,1], allData[,2], xlab = "V1", ylab = "V2", main = "RSG")
 
 Let’s visualize the points with the highest diversity at the end of the algorithm.
 ```{r diversity, fig.width=10, fig.height=5, fig.align='center'}
-iterD <- 10000
+iterD <- 30000
 myRes <- AdaptiveAllocation::AdaptRSG(allData, K = K, m = m, iteration = iterD, iterTuning = iter,
                             burnin = burnin, thin = thin, gamma = 0.5,
                             method = "EB", hyper = c(1, 1, 0, 1, 1, 1), adaptive = T, updateProbAllocation = 5,
